@@ -1,11 +1,13 @@
 package com.fkp.tools.httpclient5;
 
+import com.alibaba.fastjson2.JSONObject;
 import com.fkp.tools.httpclient5.util.HttpClient5Utils;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.io.File;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -17,14 +19,30 @@ class Httpclient5ApplicationTests {
 
     @Test
     void testGet(){
-        Map<String, Object> map = httpClient5Utils.get("http://10.0.104.191:8080/test/v1/system/readClassPathFile");
+        Map<String, Object> map = httpClient5Utils.get("https://127.0.0.1:8080/test/v1/client/get", JSONObject.of("name", "fkp"), JSONObject.of("token", "a1234a"));
         System.out.println(map);
     }
 
     @Test
-    void testPost(){
-        Map<String, Object> post = httpClient5Utils.postJson("https://10.0.104.191:8080/test/v1/health");
-        System.out.println(post);
+    void testPostUrlEncoded(){
+        Map<String, Object> map = httpClient5Utils.postUrlEncoded("https://127.0.0.1:8080/test/v1/client/postUrlEncoded",
+                JSONObject.of("name", "fkp", "age", 25), JSONObject.of("token", "a1234a"));
+        System.out.println(map);
+    }
+
+    @Test
+    void testPostFormData(){
+        File file = new File("pom.xml");
+        Map<String, Object> map = httpClient5Utils.postFormData("https://127.0.0.1:8080/test/v1/client/postFormData",
+                JSONObject.of("name", "fkp", "age", 25, "file", file), JSONObject.of("token", "a1234a"));
+        System.out.println(map);
+    }
+
+    @Test
+    void testPostJson(){
+        Map<String, Object> map = httpClient5Utils.postJson("https://127.0.0.1:8080/test/v1/client/postJson",
+                JSONObject.of("name", "fkp", "age", 25), JSONObject.of("token", "a1234a"));
+        System.out.println(map);
     }
 
     @SneakyThrows

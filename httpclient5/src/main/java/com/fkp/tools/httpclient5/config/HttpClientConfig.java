@@ -35,7 +35,7 @@ import java.security.cert.X509Certificate;
  */
 @Configuration(proxyBeanMethods = false)
 @Slf4j
-public class RestTemplateConfig {
+public class HttpClientConfig {
 
     @Bean
     public HttpClient clientHttpRequestFactory() {
