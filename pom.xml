@@ -16,6 +16,7 @@
     <description>http-client-tools</description>
     <modules>
         <module>httpclient5</module>
+        <module>okhttp3</module>
         <module>rest-template</module>
     </modules>
     <properties>
