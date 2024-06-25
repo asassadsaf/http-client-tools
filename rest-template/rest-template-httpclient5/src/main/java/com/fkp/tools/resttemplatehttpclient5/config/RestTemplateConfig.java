@@ -1,6 +1,5 @@
-package com.fkp.tools.httpclient5.config;
+package com.fkp.tools.resttemplatehttpclient5.config;
 
-import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
@@ -18,26 +17,41 @@ import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.hc.core5.util.TimeValue;
 import org.apache.hc.core5.util.Timeout;
 import org.springframework.beans.factory.BeanCreationException;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.web.client.RestTemplate;
 
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 
 /**
  * @author fengkunpeng
  * @version 1.0
- * @description HttpClient5配置类
- * @date 2024/6/6 10:59
+ * @description
+ * @date 2024/6/17 14:28
  */
 @Configuration(proxyBeanMethods = false)
-@Slf4j
-public class HttpClientConfig {
+public class RestTemplateConfig {
 
     @Bean
+    @ConditionalOnClass(HttpClient.class)
+    public RestTemplate restTemplate(ClientHttpRequestFactory factory){
+        RestTemplate restTemplate = new RestTemplate(factory);
+        restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
+        return restTemplate;
+    }
+
+    @Bean
+    @ConditionalOnClass(HttpClient.class)
+    public ClientHttpRequestFactory clientHttpRequestFactory(HttpClient httpClient){
+        return new HttpComponentsClientHttpRequestFactory(httpClient);
+    }
+
+    @Bean
+    @ConditionalOnClass(HttpClient.class)
     public HttpClient httpClient() {
         final PoolingHttpClientConnectionManager connManager = PoolingHttpClientConnectionManagerBuilder.create()
                 .setDefaultSocketConfig(SocketConfig.custom()
@@ -86,16 +100,6 @@ public class HttpClientConfig {
     private SSLConnectionSocketFactory getTrustAllSslSocketFactory(){
         SSLConnectionSocketFactory socketFactory;
         SSLContext sslContext;
-        //两种获取SSLConnectionSocketFactory方式
-//        try {
-//            sslContext = SSLContext.getInstance("TLS");
-//            sslContext.init(null, new TrustManager[]{getTrustAllManager()}, null);
-//            socketFactory = new SSLConnectionSocketFactory(sslContext, new NoopHostnameVerifier());
-//        }catch (Exception e){
-//            throw new BeanCreationException("Build HttpClient Bean error, get ssl context exception.", e);
-//        }
-
-        //两种获取SSLConnectionSocketFactory方式
         try {
             sslContext = SSLContexts.custom().loadTrustMaterial(null, TrustAllStrategy.INSTANCE).build();
             socketFactory = SSLConnectionSocketFactoryBuilder.create().setSslContext(sslContext).setHostnameVerifier(new NoopHostnameVerifier()).build();
@@ -103,18 +107,5 @@ public class HttpClientConfig {
             throw new BeanCreationException("Build HttpClient Bean error, get ssl context exception.", e);
         }
         return socketFactory;
-    }
-
-    private TrustManager getTrustAllManager(){
-        return new X509TrustManager() {
-            @Override
-            public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {}
-            @Override
-            public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {}
-            @Override
-            public X509Certificate[] getAcceptedIssuers() {
-                return null;
-            }
-        };
     }
 }
