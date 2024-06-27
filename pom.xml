@@ -18,6 +18,7 @@
         <module>httpclient5</module>
         <module>okhttp3</module>
         <module>rest-template</module>
+        <module>webclient</module>
     </modules>
     <properties>
         <java.version>17</java.version>
