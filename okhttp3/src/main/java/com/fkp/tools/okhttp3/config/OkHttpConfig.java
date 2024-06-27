@@ -46,7 +46,7 @@ public class OkHttpConfig {
                 //定时向服务段发送消息保持长连接，在http2和websocket有效
 //                .pingInterval(1, TimeUnit.SECONDS)
                 //添加拦截器
-                .addInterceptor(new MyOkHttpInterceptor())
+//                .addInterceptor(new MyOkHttpInterceptor())
                 .build();
     }
 

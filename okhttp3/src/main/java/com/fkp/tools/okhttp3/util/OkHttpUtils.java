@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -29,10 +30,26 @@ public class OkHttpUtils {
         return get(url, params, null);
     }
 
-    public Map<String, Object> get(String url, Map<String, Object> params, Map<String, String> headers) {
+    public Map<String, Object> get(String url, Map<String, Object> params, Map<String, Object> headers) {
         String urlWithParams = assemblyGetUrl(url, params);
         Headers.Builder headersBuilder = new Headers.Builder();
-        Optional.ofNullable(headers).ifPresent(map -> map.forEach(headersBuilder::add));
+
+        try {
+            for (Map.Entry<String, Object> entry : Optional.ofNullable(headers).orElse(Collections.emptyMap()).entrySet()) {
+                String key = entry.getKey();
+                Object value = entry.getValue();
+                if(value instanceof String){
+                    headersBuilder.add(key, (String) value);
+                } else if(value instanceof Date){
+                    headersBuilder.add(key, (Date) value);
+                }else {
+                    headersBuilder.add(key, String.valueOf(value));
+                }
+            }
+        }catch (Exception e){
+            throw new IllegalArgumentException("Headers value can must parse to string.", e);
+        }
+
         try (Response response = okHttpClient.newCall(new Request.Builder().get().headers(headersBuilder.build())
                 .url(urlWithParams).build()).execute()){
             ResponseBody body = response.body();
@@ -54,11 +71,25 @@ public class OkHttpUtils {
         return postJson(url, body, null);
     }
 
-    public Map<String, Object> postJson(String url, Map<String, Object> body, Map<String, String> headers){
+    public Map<String, Object> postJson(String url, Map<String, Object> body, Map<String, Object> headers){
         RequestBody requestBody = RequestBody.create(JSON.toJSONBytes(Optional.ofNullable(body).orElse(Collections.emptyMap())),
                 MediaType.parse(org.springframework.http.MediaType.APPLICATION_JSON_VALUE));
         Headers.Builder headersBuilder = new Headers.Builder();
-        Optional.ofNullable(headers).ifPresent(map -> map.forEach(headersBuilder::add));
+        try {
+            for (Map.Entry<String, Object> entry : Optional.ofNullable(headers).orElse(Collections.emptyMap()).entrySet()) {
+                String key = entry.getKey();
+                Object value = entry.getValue();
+                if(value instanceof String){
+                    headersBuilder.add(key, (String) value);
+                } else if(value instanceof Date){
+                    headersBuilder.add(key, (Date) value);
+                }else {
+                    headersBuilder.add(key, String.valueOf(value));
+                }
+            }
+        }catch (Exception e){
+            throw new IllegalArgumentException("Headers value can must parse to string.", e);
+        }
         try (Response response = okHttpClient.newCall(new Request.Builder().post(requestBody).headers(headersBuilder.build())
                 .url(url).build()).execute()){
             ResponseBody responseBody = response.body();
@@ -80,7 +111,7 @@ public class OkHttpUtils {
         return postFormData(url, body, null);
     }
 
-    public Map<String, Object> postFormData(String url, Map<String, Object> body, Map<String, String> headers){
+    public Map<String, Object> postFormData(String url, Map<String, Object> body, Map<String, Object> headers){
         MultipartBody.Builder bodyBuilder = new MultipartBody.Builder().setType(MultipartBody.FORM);
         Optional.ofNullable(body).ifPresent(map -> {
             map.forEach((key, value) -> {
@@ -101,7 +132,21 @@ public class OkHttpUtils {
         });
         MultipartBody requestBody = bodyBuilder.build();
         Headers.Builder headersBuilder = new Headers.Builder();
-        Optional.ofNullable(headers).ifPresent(map -> map.forEach(headersBuilder::add));
+        try {
+            for (Map.Entry<String, Object> entry : Optional.ofNullable(headers).orElse(Collections.emptyMap()).entrySet()) {
+                String key = entry.getKey();
+                Object value = entry.getValue();
+                if(value instanceof String){
+                    headersBuilder.add(key, (String) value);
+                } else if(value instanceof Date){
+                    headersBuilder.add(key, (Date) value);
+                }else {
+                    headersBuilder.add(key, String.valueOf(value));
+                }
+            }
+        }catch (Exception e){
+            throw new IllegalArgumentException("Headers value can must parse to string.", e);
+        }
         try (Response response = okHttpClient.newCall(new Request.Builder().post(requestBody).headers(headersBuilder.build())
                 .url(url).build()).execute()){
             ResponseBody responseBody = response.body();
@@ -115,21 +160,58 @@ public class OkHttpUtils {
         }
     }
 
-//    public Map<String, Object> postUrlEncoded(String url){
-//
-//    }
-//
-//    public Map<String, Object> postUrlEncoded(String url, Map<String, Object> body){
-//
-//    }
-//
-//    public Map<String, Object> postUrlEncoded(String url, Map<String, Object> body, Map<String, Object> headers){
-//
-//    }
-//
-//    public Map<String, Object> postJson(String url, Map<String, Object> body, Map<String, Object> headers, ContentType contentType){
-//
-//    }
+    public Map<String, Object> postUrlEncoded(String url){
+        return postUrlEncoded(url, null, null);
+    }
+
+    public Map<String, Object> postUrlEncoded(String url, Map<String, Object> body){
+        return postUrlEncoded(url, body, null);
+    }
+
+    public Map<String, Object> postUrlEncoded(String url, Map<String, Object> body, Map<String, Object> headers){
+        FormBody.Builder bodyBuilder = new FormBody.Builder();
+        try {
+            for (Map.Entry<String, Object> entry : Optional.ofNullable(body).orElse(Collections.emptyMap()).entrySet()) {
+                String key = entry.getKey();
+                Object value = entry.getValue();
+                if(value instanceof String){
+                    bodyBuilder.add(key, (String) value);
+                }else {
+                    bodyBuilder.add(key, String.valueOf(value));
+                }
+            }
+        }catch (Exception e){
+            throw new IllegalArgumentException("Body value can must parse to string.", e);
+        }
+        Headers.Builder headersBuilder = new Headers.Builder();
+        try {
+            for (Map.Entry<String, Object> entry : Optional.ofNullable(headers).orElse(Collections.emptyMap()).entrySet()) {
+                String key = entry.getKey();
+                Object value = entry.getValue();
+                if(value instanceof String){
+                    headersBuilder.add(key, (String) value);
+                } else if(value instanceof Date){
+                    headersBuilder.add(key, (Date) value);
+                }else {
+                    headersBuilder.add(key, String.valueOf(value));
+                }
+            }
+        }catch (Exception e){
+            throw new IllegalArgumentException("Headers value can must parse to string.", e);
+        }
+        try (Response response = okHttpClient.newCall(new Request.Builder().post(bodyBuilder.build()).headers(headersBuilder.build()).url(url).build())
+                     .execute()){
+            ResponseBody responseBody = response.body();
+            String bodyStr = "";
+            if(responseBody != null){
+                bodyStr = responseBody.string();
+            }
+            return JSON.parseObject(bodyStr);
+        } catch (IOException e) {
+            throw new HttpClientExecException(e);
+        }
+    }
+
 
     private String assemblyGetUrl(String url, Map<String, Object> paramMap) {
         StringBuilder sb = new StringBuilder(url);
