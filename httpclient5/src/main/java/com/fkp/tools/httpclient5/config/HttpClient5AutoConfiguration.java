@@ -1,5 +1,7 @@
 package com.fkp.tools.httpclient5.config;
 
+import com.fkp.tools.httpclient5.prop.HttpClientConfigProperties;
+import com.fkp.tools.httpclient5.util.HttpClient5Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.config.ConnectionConfig;
@@ -18,6 +20,10 @@ import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.hc.core5.util.TimeValue;
 import org.apache.hc.core5.util.Timeout;
 import org.springframework.beans.factory.BeanCreationException;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -35,34 +41,43 @@ import java.security.cert.X509Certificate;
  */
 @Configuration(proxyBeanMethods = false)
 @Slf4j
-public class HttpClientConfig {
+@ConditionalOnClass(HttpClient.class)
+@ConditionalOnProperty(prefix = "tools.http-client5", name = "enabled", havingValue = "true", matchIfMissing = true)
+@EnableConfigurationProperties(HttpClientConfigProperties.class)
+public class HttpClient5AutoConfiguration {
 
     @Bean
-    public HttpClient httpClient() {
+    public HttpClient5Utils httpClientUtils(HttpClient httpClient){
+        return new HttpClient5Utils(httpClient);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(HttpClient.class)
+    public HttpClient httpClient(HttpClientConfigProperties properties) {
         final PoolingHttpClientConnectionManager connManager = PoolingHttpClientConnectionManagerBuilder.create()
                 .setDefaultSocketConfig(SocketConfig.custom()
                         //开启TCP nagle算法
-                        .setTcpNoDelay(true)
+                        .setTcpNoDelay(properties.getTcpNoDelay())
                         .build())
                 .setDefaultConnectionConfig(ConnectionConfig.custom()
                         //确定新连接完全建立之前的超时时间。
-                        .setConnectTimeout(Timeout.ofMilliseconds(3000))
-                        .setSocketTimeout(Timeout.ofMilliseconds(5000))
-                        .setTimeToLive(TimeValue.ofHours(1))
+                        .setConnectTimeout(Timeout.ofMilliseconds(properties.getConnectTimeout()))
+                        .setSocketTimeout(Timeout.ofMilliseconds(properties.getSocketTimeout()))
+                        .setTimeToLive(TimeValue.ofMilliseconds(properties.getTimeToLive()))
                         .build())
                 //设置连接池的总最大连接数
-                .setMaxConnTotal(2000)
+                .setMaxConnTotal(properties.getMaxConnTotal())
                 //设置每个路由的最大连接数,ip+port为一个路由
-                .setMaxConnPerRoute(2000)
+                .setMaxConnPerRoute(properties.getMaxConnPerRoute())
                 //支持tls并信任所有证书
-                .setSSLSocketFactory(getTrustAllSslSocketFactory())
+                .setSSLSocketFactory(properties.getSupportSsl() ? getTrustAllSslSocketFactory() : null)
                 .build();
 
         final RequestConfig defaultRequestConfig = RequestConfig.custom()
                 //请求超时时间
-                .setConnectionRequestTimeout(Timeout.ofMilliseconds(30000))
-                .setResponseTimeout(Timeout.ofMilliseconds(10000))
-                .setExpectContinueEnabled(true)
+                .setConnectionRequestTimeout(Timeout.ofMilliseconds(properties.getConnectionRequestTimeout()))
+                .setResponseTimeout(Timeout.ofMilliseconds(properties.getResponseTimeout()))
+                .setExpectContinueEnabled(properties.getExpectContinueEnabled())
                 .build();
 
         return HttpClients.custom()
@@ -79,7 +94,7 @@ public class HttpClientConfig {
                 //不设置或设置为null默认为DefaultConnectionKeepAliveStrategy.INSTANCE长连接
                 .setKeepAliveStrategy(DefaultConnectionKeepAliveStrategy.INSTANCE)
                 //与setKeepAliveStrategy相同，不设置或设置为null默认为DefaultHttpRequestRetryStrategy.INSTANCE
-                .setRetryStrategy(new DefaultHttpRequestRetryStrategy())
+                .setRetryStrategy(DefaultHttpRequestRetryStrategy.INSTANCE)
                 .build();
     }
 

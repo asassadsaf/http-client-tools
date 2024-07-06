@@ -10,9 +10,7 @@
     <artifactId>rest-template-httpclient5</artifactId>
     <name>rest-template-httpclient5</name>
     <description>rest-template-httpclient5</description>
-    <properties>
-        <java.version>17</java.version>
-    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.apache.httpcomponents.client5</groupId>

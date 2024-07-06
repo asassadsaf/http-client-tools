@@ -27,12 +27,15 @@ import java.util.*;
  * @description httpclient5 utils - get/post-json/post-formdata/post-urlencoded
  * @date 2024/6/5 11:30
  */
-@Component
+
 @Slf4j
 public class HttpClient5Utils {
 
-    @Autowired
-    private HttpClient httpClient;
+    private final HttpClient httpClient;
+
+    public HttpClient5Utils(HttpClient httpClient) {
+        this.httpClient = httpClient;
+    }
 
     public Map<String, Object> get(String url) {
         return get(url, null, null);

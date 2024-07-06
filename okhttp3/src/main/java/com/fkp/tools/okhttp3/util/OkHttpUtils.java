@@ -1,6 +1,7 @@
 package com.fkp.tools.okhttp3.util;
 
 import com.alibaba.fastjson2.JSON;
+import com.fkp.tools.okhttp3.constant.MediaTypeValueConstant;
 import com.fkp.tools.okhttp3.exception.HttpClientExecException;
 import okhttp3.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,7 +74,7 @@ public class OkHttpUtils {
 
     public Map<String, Object> postJson(String url, Map<String, Object> body, Map<String, Object> headers){
         RequestBody requestBody = RequestBody.create(JSON.toJSONBytes(Optional.ofNullable(body).orElse(Collections.emptyMap())),
-                MediaType.parse(org.springframework.http.MediaType.APPLICATION_JSON_VALUE));
+                MediaType.parse(MediaTypeValueConstant.APPLICATION_JSON_VALUE));
         Headers.Builder headersBuilder = new Headers.Builder();
         try {
             for (Map.Entry<String, Object> entry : Optional.ofNullable(headers).orElse(Collections.emptyMap()).entrySet()) {
@@ -115,15 +116,19 @@ public class OkHttpUtils {
         MultipartBody.Builder bodyBuilder = new MultipartBody.Builder().setType(MultipartBody.FORM);
         Optional.ofNullable(body).ifPresent(map -> {
             map.forEach((key, value) -> {
-                if (value instanceof File fileValue) {
+                if (value instanceof File) {
+                    File fileValue = (File) value;
                     bodyBuilder.addFormDataPart(key, fileValue.getName(),
-                            RequestBody.create(fileValue, MediaType.parse(org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)));
-                } else if (value instanceof byte[] byteValue) {
+                            RequestBody.create(fileValue, MediaType.parse(MediaTypeValueConstant.MULTIPART_FORM_DATA_VALUE)));
+                } else if (value instanceof byte[]) {
+                    byte[] byteValue = (byte[]) value;
                     bodyBuilder.addFormDataPart(key, "byteData",
-                            RequestBody.create(byteValue, MediaType.parse(org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)));
-                } else if (value instanceof String stringValue) {
+                            RequestBody.create(byteValue, MediaType.parse(MediaTypeValueConstant.MULTIPART_FORM_DATA_VALUE)));
+                } else if (value instanceof String) {
+                    String stringValue = (String) value;
                     bodyBuilder.addFormDataPart(key, stringValue);
-                } else if (value instanceof Integer integerValue) {
+                } else if (value instanceof Integer) {
+                    Integer integerValue = (Integer) value;
                     bodyBuilder.addFormDataPart(key, String.valueOf(integerValue));
                 } else {
                     throw new IllegalArgumentException("value must be byte array or file or string or integer.");
