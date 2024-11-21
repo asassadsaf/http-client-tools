@@ -9,6 +9,7 @@ import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.DefaultConnectionKeepAliveStrategy;
 import org.apache.hc.client5.http.impl.DefaultHttpRequestRetryStrategy;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
@@ -21,6 +22,7 @@ import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.hc.core5.util.TimeValue;
 import org.apache.hc.core5.util.Timeout;
 import org.springframework.beans.factory.BeanCreationException;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -43,19 +45,19 @@ import java.security.cert.X509Certificate;
  */
 @Configuration(proxyBeanMethods = false)
 @Slf4j
-@ConditionalOnClass(HttpClient.class)
+@ConditionalOnClass(CloseableHttpClient.class)
 @ConditionalOnProperty(prefix = "tools.http-client5", name = "enabled", havingValue = "true", matchIfMissing = true)
 @EnableConfigurationProperties(HttpClientConfigProperties.class)
 public class HttpClient5AutoConfiguration {
 
     @Bean
-    public HttpClient5Utils httpClientUtils(HttpClient httpClient){
+    public HttpClient5Utils httpClientUtils(CloseableHttpClient httpClient){
         return new HttpClient5Utils(httpClient);
     }
 
     @Bean
-    @ConditionalOnMissingBean(HttpClient.class)
-    public HttpClient httpClient(HttpClientConfigProperties properties) {
+    @ConditionalOnMissingBean(CloseableHttpClient.class)
+    public CloseableHttpClient httpClient5(HttpClientConfigProperties properties) {
         final PoolingHttpClientConnectionManager connManager = PoolingHttpClientConnectionManagerBuilder.create()
                 .setDefaultSocketConfig(SocketConfig.custom()
                         //开启TCP nagle算法

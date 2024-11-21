@@ -9,6 +9,7 @@ import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
 import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
 import org.apache.hc.client5.http.impl.classic.BasicHttpClientResponseHandler;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.NameValuePair;
@@ -31,9 +32,9 @@ import java.util.*;
 @Slf4j
 public class HttpClient5Utils {
 
-    private final HttpClient httpClient;
+    private final CloseableHttpClient httpClient;
 
-    public HttpClient5Utils(HttpClient httpClient) {
+    public HttpClient5Utils(CloseableHttpClient httpClient) {
         this.httpClient = httpClient;
     }
 
