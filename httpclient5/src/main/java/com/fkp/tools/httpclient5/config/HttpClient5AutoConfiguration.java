@@ -2,9 +2,10 @@ package com.fkp.tools.httpclient5.config;
 
 import com.fkp.tools.httpclient5.prop.HttpClientConfigProperties;
 import com.fkp.tools.httpclient5.util.HttpClient5Utils;
+import com.fkp.tools.httpclient5.util.SocketUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.classic.HttpClient;
-import org.apache.hc.client5.http.config.ConnectionConfig;
+//import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.DefaultConnectionKeepAliveStrategy;
 import org.apache.hc.client5.http.impl.DefaultHttpRequestRetryStrategy;
@@ -30,6 +31,7 @@ import org.springframework.context.annotation.Configuration;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
@@ -58,19 +60,21 @@ public class HttpClient5AutoConfiguration {
                 .setDefaultSocketConfig(SocketConfig.custom()
                         //开启TCP nagle算法
                         .setTcpNoDelay(properties.getTcpNoDelay())
+                        .setSoTimeout(Timeout.ofMilliseconds(properties.getSocketTimeout()))
                         .build())
-                .setDefaultConnectionConfig(ConnectionConfig.custom()
+//                .setDefaultConnectionConfig(ConnectionConfig.custom()
                         //确定新连接完全建立之前的超时时间。
-                        .setConnectTimeout(Timeout.ofMilliseconds(properties.getConnectTimeout()))
-                        .setSocketTimeout(Timeout.ofMilliseconds(properties.getSocketTimeout()))
-                        .setTimeToLive(TimeValue.ofMilliseconds(properties.getTimeToLive()))
-                        .build())
+//                        .setConnectTimeout(Timeout.ofMilliseconds(properties.getConnectTimeout()))
+//                        .setSocketTimeout(Timeout.ofMilliseconds(properties.getSocketTimeout()))
+//                        .setTimeToLive(TimeValue.ofMilliseconds(properties.getTimeToLive()))
+//                        .build())
+                .setConnectionTimeToLive(TimeValue.ofMilliseconds(properties.getTimeToLive()))
                 //设置连接池的总最大连接数
                 .setMaxConnTotal(properties.getMaxConnTotal())
                 //设置每个路由的最大连接数,ip+port为一个路由
                 .setMaxConnPerRoute(properties.getMaxConnPerRoute())
                 //支持tls并信任所有证书
-                .setSSLSocketFactory(properties.getSupportSsl() ? getTrustAllSslSocketFactory() : null)
+                .setSSLSocketFactory(properties.getSupportSsl() ? getTrustAllSslSocketFactory(properties.getTlcpProtocol()) : null)
                 .build();
 
         final RequestConfig defaultRequestConfig = RequestConfig.custom()
@@ -98,10 +102,26 @@ public class HttpClient5AutoConfiguration {
                 .build();
     }
 
-    private SSLConnectionSocketFactory getTrustAllSslSocketFactory(){
+    private SSLConnectionSocketFactory getTrustAllSslSocketFactory(Boolean tlcpProtocol) {
         SSLConnectionSocketFactory socketFactory;
         SSLContext sslContext;
         //两种获取SSLConnectionSocketFactory方式
+        if (tlcpProtocol) {
+            try {
+                sslContext = SocketUtils.genSslContext(null, SocketUtils.genNoValidateTrustManager(), new SecureRandom(), true);
+                socketFactory = new SSLConnectionSocketFactory(sslContext, new NoopHostnameVerifier());
+            } catch (Exception e) {
+                throw new BeanCreationException("Build HttpClient Bean error, get ssl context exception.", e);
+            }
+        } else {
+            try {
+                sslContext = SSLContexts.custom().loadTrustMaterial(null, TrustAllStrategy.INSTANCE).build();
+                socketFactory = SSLConnectionSocketFactoryBuilder.create().setSslContext(sslContext).setHostnameVerifier(new NoopHostnameVerifier()).build();
+            } catch (Exception e) {
+                throw new BeanCreationException("Build HttpClient Bean error, get ssl context exception.", e);
+            }
+        }
+        log.debug("SSLContext provider name: {}", sslContext.getProvider().getName());
 //        try {
 //            sslContext = SSLContext.getInstance("TLS");
 //            sslContext.init(null, new TrustManager[]{getTrustAllManager()}, null);
@@ -111,12 +131,6 @@ public class HttpClient5AutoConfiguration {
 //        }
 
         //两种获取SSLConnectionSocketFactory方式
-        try {
-            sslContext = SSLContexts.custom().loadTrustMaterial(null, TrustAllStrategy.INSTANCE).build();
-            socketFactory = SSLConnectionSocketFactoryBuilder.create().setSslContext(sslContext).setHostnameVerifier(new NoopHostnameVerifier()).build();
-        }catch (Exception e){
-            throw new BeanCreationException("Build HttpClient Bean error, get ssl context exception.", e);
-        }
         return socketFactory;
     }
 

@@ -19,6 +19,7 @@ public class HttpClientConfigProperties {
     private Integer maxConnTotal = 2000;
     private Integer maxConnPerRoute = 2000;
     private Boolean supportSsl = true;
+    private Boolean tlcpProtocol = false;
     private Long connectionRequestTimeout = 30000L;
     private Long responseTimeout = 10000L;
     private Boolean expectContinueEnabled = true;
