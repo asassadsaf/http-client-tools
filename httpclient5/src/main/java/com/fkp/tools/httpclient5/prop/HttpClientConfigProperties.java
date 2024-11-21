@@ -23,4 +23,5 @@ public class HttpClientConfigProperties {
     private Long connectionRequestTimeout = 30000L;
     private Long responseTimeout = 10000L;
     private Boolean expectContinueEnabled = true;
+    private Boolean enabled = true;
 }
