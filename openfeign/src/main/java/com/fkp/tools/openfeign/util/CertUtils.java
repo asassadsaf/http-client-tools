@@ -25,9 +25,9 @@ public class CertUtils {
     public static KeyStore buildKeyStore(CustomFeignHttpClientProperties.KeyStoreTypeEnum typeEnum, String path,
                                          String pwd, CustomFeignHttpClientProperties.ProviderNameEnum providerNameEnum) throws Exception {
         try (InputStream inputStream = Files.newInputStream(Paths.get(path), StandardOpenOption.READ)){
-            KeyStore keyStore = KeyStore.getInstance(typeEnum.name(), providerNameEnum.getKeyStoreName());
+            KeyStore keyStore = KeyStore.getInstance(typeEnum.name(), providerNameEnum.getKeyStoreName(typeEnum));
             keyStore.load(inputStream, pwd.toCharArray());
-            log.debug("buildKeyStore type: {}, path: {}, providerName: {}", typeEnum, path, providerNameEnum);
+            log.debug("buildKeyStore type: {}, path: {}, providerName: {}", typeEnum, path, providerNameEnum.getKeyStoreName());
             return keyStore;
         }
     }
@@ -36,13 +36,13 @@ public class CertUtils {
     public static KeyStore buildTrustKeyStoreByPem(String path, CustomFeignHttpClientProperties.ProviderNameEnum providerNameEnum) throws Exception{
         KeyStore keyStore = KeyStore.getInstance(CustomFeignHttpClientProperties.KeyStoreTypeEnum.JKS.name(), providerNameEnum.getKeyStoreName());
         keyStore.load(null, null);
-        CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509", providerNameEnum.getJceName());
+        CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509", providerNameEnum.getKeyStoreName());
         Certificate certificate;
         try (InputStream inputStream = Files.newInputStream(Paths.get(path), StandardOpenOption.READ)){
             certificate = certificateFactory.generateCertificate(inputStream);
         }
         keyStore.setCertificateEntry("userCert", certificate);
-        log.debug("buildKeyStoreByPem type: {}, path: {}, providerName: {}", "pem", path, providerNameEnum);
+        log.debug("buildKeyStoreByPem type: {}, path: {}, providerName: {}", "pem", path, providerNameEnum.getKeyStoreName());
         return keyStore;
     }
 }

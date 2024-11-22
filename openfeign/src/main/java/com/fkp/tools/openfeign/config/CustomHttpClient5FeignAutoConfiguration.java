@@ -75,9 +75,12 @@ public class CustomHttpClient5FeignAutoConfiguration {
     public LayeredConnectionSocketFactory httpsSSLConnectionSocketFactory(CustomFeignHttpClientProperties properties) {
         // 添加TLSv1.1版本，TLCPv1.1使用的是TLSv1.1
         // 添加jdk版本判断，jdk1.8 [TLSv1, TLSv1.1, TLSv1.2]  jdk17:[TLSv1.2, TLSv1.3]
-        // 添加国密tls协议: TLCPv1.1
         final SSLConnectionSocketFactoryBuilder sslConnectionSocketFactoryBuilder = SSLConnectionSocketFactoryBuilder.create()
-                .setTlsVersions(getTlsVersionsByJdkVersion()).setTlsVersions("TLCPv1.1");
+                .setTlsVersions(getTlsVersionsByJdkVersion());
+        // 添加国密tls协议: TLCPv1.1
+        if(properties.isEnableGmProtocol()){
+            sslConnectionSocketFactoryBuilder.setTlsVersions("TLCPv1.1");
+        }
 
         SSLContext sslContext;
         try {

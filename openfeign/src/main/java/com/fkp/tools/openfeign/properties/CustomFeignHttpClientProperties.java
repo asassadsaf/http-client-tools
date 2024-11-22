@@ -42,6 +42,14 @@ public class CustomFeignHttpClientProperties {
             this.keyManagerFactoryAlg = keyManagerFactoryAlg;
             this.trustManagerFactoryAlg = trustManagerFactoryAlg;
         }
+
+        public String getKeyStoreName(KeyStoreTypeEnum keyStoreTypeEnum){
+            if(this.equals(SUN) && KeyStoreTypeEnum.PKCS12.equals(keyStoreTypeEnum)){
+                return this.jsseName;
+            }
+            return this.keyStoreName;
+
+        }
     }
 
     public enum KeyStoreTypeEnum{
