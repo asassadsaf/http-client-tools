@@ -7,6 +7,7 @@ import com.fkp.tools.openfeign.util.CertUtils;
 import com.fkp.tools.openfeign.util.HttpClient5Utils;
 import com.fkp.tools.openfeign.util.SocketUtils;
 import feign.hc5.ApacheHttp5Client;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
@@ -76,6 +77,9 @@ public class CustomHttpClient5FeignAutoConfiguration {
         // 添加国密tls协议: TLCPv1.1
         if(properties.isEnableGmProtocol()){
             sslConnectionSocketFactoryBuilder.setTlsVersions("TLCPv1.1");
+        }
+        if (ArrayUtils.isNotEmpty(properties.getCiphers())) {
+            sslConnectionSocketFactoryBuilder.setCiphers(properties.getCiphers());
         }
 
         SSLContext sslContext;

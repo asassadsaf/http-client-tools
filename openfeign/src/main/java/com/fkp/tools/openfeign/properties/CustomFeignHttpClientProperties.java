@@ -22,6 +22,7 @@ public class CustomFeignHttpClientProperties {
     private String trustKeyStorePwd;
     private String trustCertificate;
     private ProviderNameEnum providerName = ProviderNameEnum.SUN;
+    private String[] ciphers;
 
     @Getter
     public enum ProviderNameEnum{
